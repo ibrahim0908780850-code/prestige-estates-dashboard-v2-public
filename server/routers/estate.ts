@@ -116,6 +116,21 @@ export const estateRouter = router({
         });
         return { success: true } as const;
       }),
+    importOriginal: adminProcedure
+      .input(z.array(z.object({
+        name: z.string().trim().min(2).max(220),
+        imageUrl: z.string().startsWith("/manus-storage/"),
+        imageKey: z.string().min(1).max(512),
+        bedrooms: z.number().int().min(0).max(99),
+        area: z.number().int().min(1).max(10_000_000),
+        price: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
+        region: z.string().trim().min(2).max(180),
+        status: statusSchema.default("available"),
+      })).min(1).max(24))
+      .mutation(async ({ input }) => {
+        for (const property of input) await db.createProperty(property);
+        return { imported: input.length } as const;
+      }),
     updateStatus: adminProcedure
       .input(z.object({ id: z.number().int().positive(), status: statusSchema }))
       .mutation(({ input }) => db.updatePropertyStatus(input.id, input.status).then(() => ({ success: true } as const))),

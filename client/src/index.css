@@ -74,6 +74,14 @@
   @apply inline-flex items-center justify-center gap-2 rounded-xl border border-primary/45 bg-black/15 px-5 py-3 text-sm font-bold text-primary transition duration-200 hover:border-primary hover:bg-primary/10 active:scale-[.97];
 }
 
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-none bg-primary px-6 py-3 text-sm font-bold text-primary-foreground transition duration-200 hover:-translate-y-0.5 hover:bg-[#ebcf8b] active:scale-[.97] disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.btn-outline {
+  @apply inline-flex items-center justify-center gap-2 rounded-none border border-primary/55 bg-transparent px-6 py-3 text-sm font-bold text-primary transition duration-200 hover:bg-primary hover:text-primary-foreground active:scale-[.97];
+}
+
 .surface-panel {
   @apply border border-white/[.08] bg-[#121613]/85 shadow-[0_24px_80px_rgba(0,0,0,.23)] backdrop-blur-xl;
 }
