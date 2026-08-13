@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { PropertyManagementPanel } from "@/components/PropertyManagementPanel";
 import { ArrowRight, Building2, Check, ChevronLeft, CircleDollarSign, FileImage, Loader2, LogOut, MapPin, Pencil, Phone, Plus, Settings2, Trash2, Users, X } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -76,7 +77,7 @@ export default function AdminDashboard() {
         <main className="p-5 sm:p-8 lg:p-10">
           {(propertiesError || agentsError || settingsError) && <div className="mb-6 rounded-xl border border-amber-300/25 bg-amber-300/[.07] px-4 py-3 text-sm leading-7 text-amber-100">تعذر الوصول إلى بعض بيانات لوحة الإدارة مؤقتًا. لن يتم فقدان أي تغييرات؛ يرجى المحاولة مجددًا بعد استعادة اتصال قاعدة البيانات.</div>}
           {tab === "overview" && <Overview properties={properties} agents={agents} onProperties={() => setTab("properties")} onAgents={() => setTab("agents")} />}
-          {tab === "properties" && <PropertiesManager properties={properties} loading={propertiesLoading} propertyForm={propertyForm} setPropertyForm={setPropertyForm} propertyImage={propertyImage} onImage={event => setPropertyImage(event.target.files?.[0] ?? null)} onSubmit={submitProperty} submitting={createProperty.isPending} onStatus={(id, status) => updateStatus.mutate({ id, status })} onDelete={id => { if (window.confirm("هل تريد حذف هذا العقار؟")) deleteProperty.mutate({ id }); }} />}
+          {tab === "properties" && <PropertyManagementPanel />}
           {tab === "agents" && <AgentsManager agents={agents} form={agentForm} setForm={setAgentForm} onSubmit={event => { event.preventDefault(); saveAgent.mutate(agentForm); }} onDelete={id => { if (window.confirm("هل تريد حذف هذا الوكيل؟")) deleteAgent.mutate({ id }); }} />}
           {tab === "settings" && <SettingsManager form={settingsForm} setForm={setSettingsForm} onSubmit={event => { event.preventDefault(); saveSettings.mutate(settingsForm); }} saving={saveSettings.isPending} />}
         </main>

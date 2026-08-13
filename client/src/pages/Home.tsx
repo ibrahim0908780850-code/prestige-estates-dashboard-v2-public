@@ -1,12 +1,13 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { PropertyDetailContact } from "@/components/PropertyDetailContact";
+import { PropertyDetailManaged } from "@/components/PropertyDetailManaged";
 import { trpc } from "@/lib/trpc";
 import { BedDouble, ChevronDown, KeyRound, LogIn, MapPin, Menu, Phone, Search, ShieldCheck, SquareDashed, UserPlus, X } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 
-type Property = { id: number; name: string; imageUrl: string; bedrooms: number; area: number; price: number; region: string; status: "available" | "reserved" | "sold" };
+type Property = { id: number; name: string; imageUrl: string; bedrooms: number; area: number; price: number; region: string; status: "available" | "reserved" | "sold"; description: string | null; amenities: string | null };
 const hero = "/manus-storage/mediterranean-estate_3feb7749.jpg";
 const fmt = (n: number) => n >= 1e6 ? `$${(n / 1e6).toFixed(1)}M` : `$${n.toLocaleString("en-US")}`;
 const go = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -44,7 +45,7 @@ export default function Home() {
     </main>
     <footer className="border-t border-white/[.06] bg-[#111111] px-6 py-14"><div className="mx-auto grid max-w-7xl gap-8 md:grid-cols-4"><div><p className="font-[family-name:var(--font-display)] text-xl">PRESTIGE <span className="text-primary">ESTATES</span></p><p className="mt-5 text-sm leading-7 text-muted">تجربة عقارية تركز على الاستثنائية والخصوصية.</p></div><FooterLinks title="روابط سريعة" items={["العقارات", "عن الشركة", "تواصل معنا"]} click={x => nav(x === "العقارات" ? "properties" : x === "عن الشركة" ? "services" : "contact")} /><FooterLinks title="خدماتنا" items={["استشارات التملك", "إدارة العقارات", "تصميم داخلي"]} click={() => nav("services")} /><div><p className="font-[family-name:var(--font-display)] text-lg">تواصل خاص</p>{company?.phone ? <a className="mt-4 flex items-center gap-2 text-sm text-primary" href={`tel:${company.phone}`}><Phone className="h-4 w-4" />{company.phone}</a> : <p className="mt-4 text-sm text-muted">قناة تواصل خاصة قريبًا</p>}</div></div><p className="mx-auto mt-10 max-w-7xl border-t border-white/[.06] pt-6 text-xs text-muted">© 2026 {company?.companyName || "PRESTIGE ESTATES"}. جميع الحقوق محفوظة.</p></footer>
     {menu && <div className="fixed inset-0 z-[60] bg-[#050505] p-8 lg:hidden"><div className="flex justify-between"><span className="font-[family-name:var(--font-display)] text-xl">PRESTIGE <span className="text-primary">ESTATES</span></span><button onClick={() => setMenu(false)}><X /></button></div><div className="mt-16 flex flex-col gap-6 font-[family-name:var(--font-display)] text-3xl">{[["الرئيسية", "home"], ["العقارات", "properties"], ["المجموعات", "collections"], ["الخدمات", "services"], ["تواصل", "contact"]].map(([label, id]) => <button key={id} onClick={() => nav(id)} className="text-right">{label}</button>)}</div></div>}
-    {selected && <PropertyDetailContact property={selected} all={items} phone={contactPhone} whatsapp={contactWhatsapp} close={() => setSelected(null)} select={setSelected} />}
+    {selected && <PropertyDetailManaged property={selected} all={items} phone={contactPhone} whatsapp={contactWhatsapp} close={() => setSelected(null)} select={setSelected} />}
     {mode && <Auth mode={mode} close={() => setMode(null)} login={login} setLogin={setLogin} signup={signup} setSignup={setSignup} pending={authLogin.isPending || authRegister.isPending} signIn={e => { e.preventDefault(); authLogin.mutate(login); }} signUp={e => { e.preventDefault(); authRegister.mutate(signup); }} toggle={() => setMode(mode === "login" ? "register" : "login")} />}
   </div>;
 }

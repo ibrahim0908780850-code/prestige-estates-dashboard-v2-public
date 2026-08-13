@@ -15,6 +15,13 @@
       "when": 1786591718630,
       "tag": "0001_lucky_rumiko_fujikawa",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1786596165883,
+      "tag": "0002_outstanding_molecule_man",
+      "breakpoints": true
     }
   ]
 }

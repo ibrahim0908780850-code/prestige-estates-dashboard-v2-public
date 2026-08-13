@@ -166,6 +166,8 @@ export async function createProperty(input: {
   area: number;
   price: number;
   region: string;
+  description?: string | null;
+  amenities?: string | null;
   status: "available" | "reserved" | "sold";
 }) {
   const db = await requireDb();

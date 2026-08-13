@@ -57,6 +57,8 @@ export const properties = mysqlTable("properties", {
   area: int("area").notNull(),
   price: bigint("price", { mode: "number" }).notNull(),
   region: varchar("region", { length: 180 }).notNull(),
+  description: text("description"),
+  amenities: text("amenities"),
   status: mysqlEnum("status", ["available", "reserved", "sold"]).default("available").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

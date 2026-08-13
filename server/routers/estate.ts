@@ -99,6 +99,8 @@ export const estateRouter = router({
         area: z.number().int().min(1).max(10_000_000),
         price: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
         region: z.string().trim().min(2).max(180),
+        description: z.string().trim().max(6000).default(""),
+        amenities: z.array(z.string().trim().min(1).max(120)).max(32).default([]),
         status: statusSchema.default("available"),
       }))
       .mutation(async ({ input }) => {
@@ -112,6 +114,8 @@ export const estateRouter = router({
           area: input.area,
           price: input.price,
           region: input.region,
+          description: input.description,
+          amenities: JSON.stringify(input.amenities),
           status: input.status,
         });
         return { success: true } as const;
