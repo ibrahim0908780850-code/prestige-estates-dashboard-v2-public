@@ -1,17 +1,17 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import {
+  bigint,
+  int,
+  mysqlEnum,
+  mysqlTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  varchar,
+} from "drizzle-orm/mysql-core";
 
-/**
- * Core user table backing auth flow.
- * Extend this file with additional tables as your product grows.
- * Columns use camelCase to match both database fields and generated types.
- */
+/** Core user table retained for the platform OAuth infrastructure. */
 export const users = mysqlTable("users", {
-  /**
-   * Surrogate primary key. Auto-incremented numeric value managed by the database.
-   * Use this for relations between tables.
-   */
   id: int("id").autoincrement().primaryKey(),
-  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
@@ -22,7 +22,66 @@ export const users = mysqlTable("users", {
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
 });
 
+export const estateUsers = mysqlTable(
+  "estate_users",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    fullName: varchar("fullName", { length: 180 }).notNull(),
+    email: varchar("email", { length: 320 }).notNull(),
+    passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
+    role: mysqlEnum("role", ["visitor", "admin"]).default("visitor").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [uniqueIndex("estate_users_email_unique").on(table.email)],
+);
+
+export const estateSessions = mysqlTable(
+  "estate_sessions",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    estateUserId: int("estateUserId").notNull().references(() => estateUsers.id, { onDelete: "cascade" }),
+    tokenHash: varchar("tokenHash", { length: 128 }).notNull(),
+    expiresAt: timestamp("expiresAt").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [uniqueIndex("estate_sessions_token_hash_unique").on(table.tokenHash)],
+);
+
+export const properties = mysqlTable("properties", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 220 }).notNull(),
+  imageUrl: varchar("imageUrl", { length: 2048 }).notNull(),
+  imageKey: varchar("imageKey", { length: 512 }),
+  bedrooms: int("bedrooms").notNull(),
+  area: int("area").notNull(),
+  price: bigint("price", { mode: "number" }).notNull(),
+  region: varchar("region", { length: 180 }).notNull(),
+  status: mysqlEnum("status", ["available", "reserved", "sold"]).default("available").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const agents = mysqlTable("agents", {
+  id: int("id").autoincrement().primaryKey(),
+  fullName: varchar("fullName", { length: 180 }).notNull(),
+  phone: varchar("phone", { length: 48 }).notNull(),
+  title: varchar("title", { length: 120 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const companySettings = mysqlTable("company_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  companyName: varchar("companyName", { length: 180 }).notNull(),
+  phone: varchar("phone", { length: 48 }).notNull(),
+  whatsapp: varchar("whatsapp", { length: 48 }).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type EstateUser = typeof estateUsers.$inferSelect;
+export type Property = typeof properties.$inferSelect;
+export type Agent = typeof agents.$inferSelect;
+export type CompanySettings = typeof companySettings.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
-
-// TODO: Add your tables here
