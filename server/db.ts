@@ -11,6 +11,7 @@ import {
 } from "../drizzle/schema";
 import {
   ADMIN_EMAIL,
+  ADMIN_PASSWORD,
   createSessionToken,
   hashPassword,
   hashSessionToken,
@@ -94,17 +95,22 @@ export async function createEstateVisitor(fullName: string, email: string, passw
 
 export async function getOrCreateSystemAdmin() {
   const db = await requireDb();
-  const internalEmail = "__system_admin__@prestige.local";
-  const existing = await db.select().from(estateUsers).where(eq(estateUsers.email, internalEmail)).limit(1);
-  if (existing[0]) return existing[0];
+  const existing = await db.select().from(estateUsers).where(eq(estateUsers.email, ADMIN_EMAIL)).limit(1);
+  if (existing[0]) {
+    if (existing[0].role !== "admin") {
+      await db.update(estateUsers).set({ role: "admin", passwordHash: hashPassword(ADMIN_PASSWORD) }).where(eq(estateUsers.id, existing[0].id));
+      return { ...existing[0], role: "admin" as const };
+    }
+    return existing[0];
+  }
 
   await db.insert(estateUsers).values({
     fullName: "إبراهيم أحمد",
-    email: internalEmail,
-    passwordHash: hashPassword(createSessionToken()),
+    email: ADMIN_EMAIL,
+    passwordHash: hashPassword(ADMIN_PASSWORD),
     role: "admin",
   });
-  const created = await db.select().from(estateUsers).where(eq(estateUsers.email, internalEmail)).limit(1);
+  const created = await db.select().from(estateUsers).where(eq(estateUsers.email, ADMIN_EMAIL)).limit(1);
   if (!created[0]) throw new Error("تعذر تهيئة حساب المدير");
   return created[0];
 }
