@@ -7,7 +7,7 @@ import { useLocation } from "wouter";
 export default function Login() {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<"login" | "register">(() => new URLSearchParams(window.location.search).get("mode") === "register" ? "register" : "login");
   const [login, setLogin] = useState({ email: "", password: "" });
   const [register, setRegister] = useState({ fullName: "", email: "", password: "" });
   const loginMutation = trpc.estate.auth.login.useMutation({ onSuccess: ({ user }) => { utils.estate.auth.me.setData(undefined, user); setLocation(user.role === "admin" ? "/admin" : "/"); }, onError: error => toast.error(error.message) });
