@@ -64,6 +64,17 @@ export const properties = mysqlTable("properties", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+export const favorites = mysqlTable(
+  "property_favorites",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    estateUserId: int("estateUserId").notNull().references(() => estateUsers.id, { onDelete: "cascade" }),
+    propertyId: int("propertyId").notNull().references(() => properties.id, { onDelete: "cascade" }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [uniqueIndex("property_favorites_user_property_unique").on(table.estateUserId, table.propertyId)],
+);
+
 export const agents = mysqlTable("agents", {
   id: int("id").autoincrement().primaryKey(),
   fullName: varchar("fullName", { length: 180 }).notNull(),
@@ -83,6 +94,7 @@ export const companySettings = mysqlTable("company_settings", {
 
 export type EstateUser = typeof estateUsers.$inferSelect;
 export type Property = typeof properties.$inferSelect;
+export type Favorite = typeof favorites.$inferSelect;
 export type Agent = typeof agents.$inferSelect;
 export type CompanySettings = typeof companySettings.$inferSelect;
 export type User = typeof users.$inferSelect;

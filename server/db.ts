@@ -5,6 +5,7 @@ import {
   companySettings,
   estateSessions,
   estateUsers,
+  favorites,
   type InsertUser,
   properties,
   users,
@@ -178,6 +179,22 @@ export async function createProperty(input: {
 }) {
   const db = await requireDb();
   await db.insert(properties).values(input);
+}
+
+export async function listFavoritePropertyIds(estateUserId: number) {
+  const db = await requireDb();
+  const result = await db.select({ propertyId: favorites.propertyId }).from(favorites).where(eq(favorites.estateUserId, estateUserId));
+  return result.map(row => row.propertyId);
+}
+
+export async function addFavorite(estateUserId: number, propertyId: number) {
+  const db = await requireDb();
+  await db.insert(favorites).values({ estateUserId, propertyId }).onDuplicateKeyUpdate({ set: { propertyId } });
+}
+
+export async function removeFavorite(estateUserId: number, propertyId: number) {
+  const db = await requireDb();
+  await db.delete(favorites).where(and(eq(favorites.estateUserId, estateUserId), eq(favorites.propertyId, propertyId)));
 }
 
 export async function updatePropertyStatus(

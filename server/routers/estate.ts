@@ -6,7 +6,7 @@ import { ADMIN_EMAIL, ESTATE_SESSION_COOKIE, isAdminCredential, normalizeEmail, 
 import { storagePut } from "../storage";
 import { getSessionCookieOptions } from "../_core/cookies";
 import type { TrpcContext } from "../_core/context";
-import { adminProcedure, publicProcedure, router } from "../_core/trpc";
+import { adminProcedure, protectedProcedure, publicProcedure, router } from "../_core/trpc";
 
 const statusSchema = z.enum(["available", "reserved", "sold"]);
 
@@ -141,6 +141,15 @@ export const estateRouter = router({
     delete: adminProcedure
       .input(z.object({ id: z.number().int().positive() }))
       .mutation(({ input }) => db.deleteProperty(input.id).then(() => ({ success: true } as const))),
+  }),
+  favorites: router({
+    list: protectedProcedure.query(({ ctx }) => db.listFavoritePropertyIds(ctx.user.id)),
+    add: protectedProcedure
+      .input(z.object({ propertyId: z.number().int().positive() }))
+      .mutation(({ ctx, input }) => db.addFavorite(ctx.user.id, input.propertyId).then(() => ({ success: true } as const))),
+    remove: protectedProcedure
+      .input(z.object({ propertyId: z.number().int().positive() }))
+      .mutation(({ ctx, input }) => db.removeFavorite(ctx.user.id, input.propertyId).then(() => ({ success: true } as const))),
   }),
   agents: router({
     list: publicProcedure.query(() => db.listAgents()),
