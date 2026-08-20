@@ -1,9 +1,9 @@
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { registerOAuthRoutes } from "../server/_core/oauth";
-import { registerStorageProxy } from "../server/_core/storageProxy";
-import { createContext } from "../server/_core/context";
-import { appRouter } from "../server/routers";
+import { registerOAuthRoutes } from "./_core/oauth";
+import { registerStorageProxy } from "./_core/storageProxy";
+import { createContext } from "./_core/context";
+import { appRouter } from "./routers";
 
 const app = express();
 
@@ -21,7 +21,7 @@ const trpcMiddleware = createExpressMiddleware({
 app.use("/api/trpc", trpcMiddleware);
 app.use("/trpc", trpcMiddleware);
 
-app.get("/api/health", (_req, res) => {
+app.get(["/api/health", "/health"], (_req, res) => {
   res.status(200).json({ ok: true });
 });
 
