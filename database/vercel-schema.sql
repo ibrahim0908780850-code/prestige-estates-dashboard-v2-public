@@ -1,89 +1,80 @@
--- Run this once in the SQL editor for the MySQL/TiDB database referenced by DATABASE_URL in Vercel.
--- The statements are idempotent and do not drop existing tables or data.
+-- PostgreSQL / Supabase schema for Prestige Estates.
+-- Run once in the SQL Editor for the dedicated Prestige Estates Supabase project.
 
-CREATE TABLE IF NOT EXISTS `users` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `openId` VARCHAR(64) NOT NULL,
-  `name` TEXT NULL,
-  `email` VARCHAR(320) NULL,
-  `loginMethod` VARCHAR(64) NULL,
-  `role` ENUM('user', 'admin') NOT NULL DEFAULT 'user',
-  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updatedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `lastSignedIn` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `users_open_id_unique` (`openId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TYPE "public"."estate_role" AS ENUM('visitor', 'admin');
+CREATE TYPE "public"."property_status" AS ENUM('available', 'reserved', 'sold');
+CREATE TYPE "public"."user_role" AS ENUM('user', 'admin');
 
-CREATE TABLE IF NOT EXISTS `estate_users` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `fullName` VARCHAR(180) NOT NULL,
-  `email` VARCHAR(320) NOT NULL,
-  `passwordHash` VARCHAR(255) NOT NULL,
-  `role` ENUM('visitor', 'admin') NOT NULL DEFAULT 'visitor',
-  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updatedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `estate_users_email_unique` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE "agents" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "fullName" varchar(180) NOT NULL,
+  "phone" varchar(48) NOT NULL,
+  "title" varchar(120),
+  "createdAt" timestamp with time zone DEFAULT now() NOT NULL,
+  "updatedAt" timestamp with time zone DEFAULT now() NOT NULL
+);
 
-CREATE TABLE IF NOT EXISTS `properties` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `name` VARCHAR(220) NOT NULL,
-  `imageUrl` VARCHAR(2048) NOT NULL,
-  `imageKey` VARCHAR(512) NULL,
-  `bedrooms` INT NOT NULL,
-  `area` INT NOT NULL,
-  `price` BIGINT NOT NULL,
-  `region` VARCHAR(180) NOT NULL,
-  `description` TEXT NULL,
-  `amenities` TEXT NULL,
-  `status` ENUM('available', 'reserved', 'sold') NOT NULL DEFAULT 'available',
-  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updatedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE "company_settings" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "companyName" varchar(180) NOT NULL,
+  "phone" varchar(48) NOT NULL,
+  "whatsapp" varchar(48) NOT NULL,
+  "updatedAt" timestamp with time zone DEFAULT now() NOT NULL
+);
 
-CREATE TABLE IF NOT EXISTS `agents` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `fullName` VARCHAR(180) NOT NULL,
-  `phone` VARCHAR(48) NOT NULL,
-  `title` VARCHAR(120) NULL,
-  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updatedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE "estate_users" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "fullName" varchar(180) NOT NULL,
+  "email" varchar(320) NOT NULL,
+  "passwordHash" varchar(255) NOT NULL,
+  "role" "estate_role" DEFAULT 'visitor' NOT NULL,
+  "createdAt" timestamp with time zone DEFAULT now() NOT NULL,
+  "updatedAt" timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT "estate_users_email_unique" UNIQUE("email")
+);
 
-CREATE TABLE IF NOT EXISTS `company_settings` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `companyName` VARCHAR(180) NOT NULL,
-  `phone` VARCHAR(48) NOT NULL,
-  `whatsapp` VARCHAR(48) NOT NULL,
-  `updatedAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE "properties" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "name" varchar(220) NOT NULL,
+  "imageUrl" varchar(2048) NOT NULL,
+  "imageKey" varchar(512),
+  "bedrooms" integer NOT NULL,
+  "area" integer NOT NULL,
+  "price" bigint NOT NULL,
+  "region" varchar(180) NOT NULL,
+  "description" text,
+  "amenities" text,
+  "status" "property_status" DEFAULT 'available' NOT NULL,
+  "createdAt" timestamp with time zone DEFAULT now() NOT NULL,
+  "updatedAt" timestamp with time zone DEFAULT now() NOT NULL
+);
 
-CREATE TABLE IF NOT EXISTS `estate_sessions` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `estateUserId` INT NOT NULL,
-  `tokenHash` VARCHAR(128) NOT NULL,
-  `expiresAt` TIMESTAMP NOT NULL,
-  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `estate_sessions_token_hash_unique` (`tokenHash`),
-  CONSTRAINT `estate_sessions_estate_user_fk`
-    FOREIGN KEY (`estateUserId`) REFERENCES `estate_users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE "users" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "openId" varchar(64) NOT NULL,
+  "name" text,
+  "email" varchar(320),
+  "loginMethod" varchar(64),
+  "role" "user_role" DEFAULT 'user' NOT NULL,
+  "createdAt" timestamp with time zone DEFAULT now() NOT NULL,
+  "updatedAt" timestamp with time zone DEFAULT now() NOT NULL,
+  "lastSignedIn" timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT "users_openId_unique" UNIQUE("openId")
+);
 
-CREATE TABLE IF NOT EXISTS `property_favorites` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `estateUserId` INT NOT NULL,
-  `propertyId` INT NOT NULL,
-  `createdAt` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `property_favorites_user_property_unique` (`estateUserId`, `propertyId`),
-  CONSTRAINT `property_favorites_estate_user_fk`
-    FOREIGN KEY (`estateUserId`) REFERENCES `estate_users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `property_favorites_property_fk`
-    FOREIGN KEY (`propertyId`) REFERENCES `properties` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE "estate_sessions" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "estateUserId" integer NOT NULL REFERENCES "estate_users"("id") ON DELETE CASCADE,
+  "tokenHash" varchar(128) NOT NULL,
+  "expiresAt" timestamp with time zone NOT NULL,
+  "createdAt" timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT "estate_sessions_token_hash_unique" UNIQUE("tokenHash")
+);
+
+CREATE TABLE "property_favorites" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "estateUserId" integer NOT NULL REFERENCES "estate_users"("id") ON DELETE CASCADE,
+  "propertyId" integer NOT NULL REFERENCES "properties"("id") ON DELETE CASCADE,
+  "createdAt" timestamp with time zone DEFAULT now() NOT NULL,
+  CONSTRAINT "property_favorites_user_property_unique" UNIQUE("estateUserId", "propertyId")
+);

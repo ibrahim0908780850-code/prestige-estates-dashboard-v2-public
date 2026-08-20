@@ -29,93 +29,98 @@ import { parse as parseCookieHeader2 } from "cookie";
 
 // server/db.ts
 import { and, desc, eq, gt } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 
 // drizzle/schema.ts
 import {
   bigint,
-  int,
-  mysqlEnum,
-  mysqlTable,
+  integer,
+  pgEnum,
+  pgTable,
+  serial,
   text,
   timestamp,
   uniqueIndex,
   varchar
-} from "drizzle-orm/mysql-core";
-var users = mysqlTable("users", {
-  id: int("id").autoincrement().primaryKey(),
+} from "drizzle-orm/pg-core";
+var userRole = pgEnum("user_role", ["user", "admin"]);
+var estateRole = pgEnum("estate_role", ["visitor", "admin"]);
+var propertyStatus = pgEnum("property_status", ["available", "reserved", "sold"]);
+var users = pgTable("users", {
+  id: serial("id").primaryKey(),
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-  lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull()
+  role: userRole("role").default("user").notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow().$onUpdate(() => /* @__PURE__ */ new Date()).notNull(),
+  lastSignedIn: timestamp("lastSignedIn", { withTimezone: true }).defaultNow().notNull()
 });
-var estateUsers = mysqlTable(
+var estateUsers = pgTable(
   "estate_users",
   {
-    id: int("id").autoincrement().primaryKey(),
+    id: serial("id").primaryKey(),
     fullName: varchar("fullName", { length: 180 }).notNull(),
     email: varchar("email", { length: 320 }).notNull(),
     passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
-    role: mysqlEnum("role", ["visitor", "admin"]).default("visitor").notNull(),
-    createdAt: timestamp("createdAt").defaultNow().notNull(),
-    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
+    role: estateRole("role").default("visitor").notNull(),
+    createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow().$onUpdate(() => /* @__PURE__ */ new Date()).notNull()
   },
   (table) => [uniqueIndex("estate_users_email_unique").on(table.email)]
 );
-var estateSessions = mysqlTable(
+var estateSessions = pgTable(
   "estate_sessions",
   {
-    id: int("id").autoincrement().primaryKey(),
-    estateUserId: int("estateUserId").notNull().references(() => estateUsers.id, { onDelete: "cascade" }),
+    id: serial("id").primaryKey(),
+    estateUserId: integer("estateUserId").notNull().references(() => estateUsers.id, { onDelete: "cascade" }),
     tokenHash: varchar("tokenHash", { length: 128 }).notNull(),
-    expiresAt: timestamp("expiresAt").notNull(),
-    createdAt: timestamp("createdAt").defaultNow().notNull()
+    expiresAt: timestamp("expiresAt", { withTimezone: true }).notNull(),
+    createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull()
   },
   (table) => [uniqueIndex("estate_sessions_token_hash_unique").on(table.tokenHash)]
 );
-var properties = mysqlTable("properties", {
-  id: int("id").autoincrement().primaryKey(),
+var properties = pgTable("properties", {
+  id: serial("id").primaryKey(),
   name: varchar("name", { length: 220 }).notNull(),
   imageUrl: varchar("imageUrl", { length: 2048 }).notNull(),
   imageKey: varchar("imageKey", { length: 512 }),
-  bedrooms: int("bedrooms").notNull(),
-  area: int("area").notNull(),
+  bedrooms: integer("bedrooms").notNull(),
+  area: integer("area").notNull(),
   price: bigint("price", { mode: "number" }).notNull(),
   region: varchar("region", { length: 180 }).notNull(),
   description: text("description"),
   amenities: text("amenities"),
-  status: mysqlEnum("status", ["available", "reserved", "sold"]).default("available").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
+  status: propertyStatus("status").default("available").notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow().$onUpdate(() => /* @__PURE__ */ new Date()).notNull()
 });
-var favorites = mysqlTable(
+var favorites = pgTable(
   "property_favorites",
   {
-    id: int("id").autoincrement().primaryKey(),
-    estateUserId: int("estateUserId").notNull().references(() => estateUsers.id, { onDelete: "cascade" }),
-    propertyId: int("propertyId").notNull().references(() => properties.id, { onDelete: "cascade" }),
-    createdAt: timestamp("createdAt").defaultNow().notNull()
+    id: serial("id").primaryKey(),
+    estateUserId: integer("estateUserId").notNull().references(() => estateUsers.id, { onDelete: "cascade" }),
+    propertyId: integer("propertyId").notNull().references(() => properties.id, { onDelete: "cascade" }),
+    createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull()
   },
   (table) => [uniqueIndex("property_favorites_user_property_unique").on(table.estateUserId, table.propertyId)]
 );
-var agents = mysqlTable("agents", {
-  id: int("id").autoincrement().primaryKey(),
+var agents = pgTable("agents", {
+  id: serial("id").primaryKey(),
   fullName: varchar("fullName", { length: 180 }).notNull(),
   phone: varchar("phone", { length: 48 }).notNull(),
   title: varchar("title", { length: 120 }),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
+  createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow().$onUpdate(() => /* @__PURE__ */ new Date()).notNull()
 });
-var companySettings = mysqlTable("company_settings", {
-  id: int("id").autoincrement().primaryKey(),
+var companySettings = pgTable("company_settings", {
+  id: serial("id").primaryKey(),
   companyName: varchar("companyName", { length: 180 }).notNull(),
   phone: varchar("phone", { length: 48 }).notNull(),
   whatsapp: varchar("whatsapp", { length: 48 }).notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull()
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow().$onUpdate(() => /* @__PURE__ */ new Date()).notNull()
 });
 
 // server/estateAuth.ts
@@ -151,9 +156,11 @@ function hashSessionToken(token) {
 
 // server/db.ts
 var _db = null;
+var _client = null;
 async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
-    _db = drizzle(process.env.DATABASE_URL);
+    _client = postgres(process.env.DATABASE_URL, { prepare: false });
+    _db = drizzle(_client);
   }
   return _db;
 }
@@ -168,7 +175,8 @@ async function upsertUser(user) {
     role: user.role ?? "user",
     lastSignedIn: user.lastSignedIn ?? /* @__PURE__ */ new Date()
   };
-  await db.insert(users).values(values).onDuplicateKeyUpdate({
+  await db.insert(users).values(values).onConflictDoUpdate({
+    target: users.openId,
     set: {
       name: values.name,
       email: values.email,
@@ -276,7 +284,7 @@ async function listFavoritePropertyIds(estateUserId) {
 }
 async function addFavorite(estateUserId, propertyId) {
   const db = await requireDb();
-  await db.insert(favorites).values({ estateUserId, propertyId }).onDuplicateKeyUpdate({ set: { propertyId } });
+  await db.insert(favorites).values({ estateUserId, propertyId }).onConflictDoNothing({ target: [favorites.estateUserId, favorites.propertyId] });
 }
 async function removeFavorite(estateUserId, propertyId) {
   const db = await requireDb();

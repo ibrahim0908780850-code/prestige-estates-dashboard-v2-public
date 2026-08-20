@@ -1,5 +1,6 @@
 import { and, desc, eq, gt } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import {
   agents,
   companySettings,
@@ -21,6 +22,7 @@ import {
 } from "./estateAuth";
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _client: ReturnType<typeof postgres> | null = null;
 
 export type EstateSessionUser = {
   id: number;
@@ -31,7 +33,8 @@ export type EstateSessionUser = {
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
-    _db = drizzle(process.env.DATABASE_URL);
+    _client = postgres(process.env.DATABASE_URL, { prepare: false });
+    _db = drizzle(_client);
   }
   return _db;
 }
@@ -47,7 +50,8 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     role: user.role ?? "user",
     lastSignedIn: user.lastSignedIn ?? new Date(),
   };
-  await db.insert(users).values(values).onDuplicateKeyUpdate({
+  await db.insert(users).values(values).onConflictDoUpdate({
+    target: users.openId,
     set: {
       name: values.name,
       email: values.email,
@@ -189,7 +193,10 @@ export async function listFavoritePropertyIds(estateUserId: number) {
 
 export async function addFavorite(estateUserId: number, propertyId: number) {
   const db = await requireDb();
-  await db.insert(favorites).values({ estateUserId, propertyId }).onDuplicateKeyUpdate({ set: { propertyId } });
+  await db
+    .insert(favorites)
+    .values({ estateUserId, propertyId })
+    .onConflictDoNothing({ target: [favorites.estateUserId, favorites.propertyId] });
 }
 
 export async function removeFavorite(estateUserId: number, propertyId: number) {

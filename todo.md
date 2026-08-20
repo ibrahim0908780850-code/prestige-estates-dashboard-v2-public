@@ -43,4 +43,11 @@
 - [x] استبدال مسارات alias في سلسلة API بمسارات نسبية متوافقة مع Vercel.
 - [x] تجميع دالة API إلى ملف JavaScript واحد أثناء بناء Vercel لمنع فقدان ملفات الخادم وقت التشغيل.
 - [ ] ضبط DATABASE_URL في Vercel والتحقق من إجراءات العقارات المعتمدة على قاعدة البيانات.
-- [ ] تطبيق مخطط جداول Prestige Estates على قاعدة البيانات الخارجية المرتبطة بـ Vercel.
+- [x] تطبيق مخطط جداول Prestige Estates على قاعدة البيانات الخارجية المرتبطة بـ Vercel.
+- [x] توفير ملف SQL متوافق مع PostgreSQL لتجهيز جداول Prestige Estates على قاعدة Vercel الخارجية.
+- [x] استبدال DATABASE_URL في Vercel برابط MySQL/TiDB متوافق مع Drizzle mysql2 وتشغيل مخطط الجداول عليه. — ملغى بقرار الانتقال إلى Supabase PostgreSQL.
+- [x] تحويل طبقة Drizzle واتصال الخادم من MySQL إلى Supabase PostgreSQL دون تغيير واجهة الموقع.
+- [x] تطبيق مخطط PostgreSQL على مشروع Supabase Assistant voice والتحقق من وجود الجداول.
+- [x] إنشاء مشروع Supabase جديد مستقل باسم Assistant voice بواسطة المستخدم.
+- [ ] ربط قاعدة Supabase Assistant voice بمتغير DATABASE_URL في Vercel وإعادة النشر.
+- [ ] التحقق حيًا من إجراءات العقارات والمصادقة على Vercel باستخدام Supabase الجديد.
